@@ -1,0 +1,47 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# ── 签名密钥：绝不能进仓库 ──────────────────────────────
+# 凭据文件（含密码）与 keystore 本体都放在仓库外的 D:/dev/keys，
+# 这里再加一层，防止有人把密钥拷进项目目录后误提交。
+keystore.properties
+*.jks
+*.keystore
+signing-key.properties
+
+# ── Kokoro 模型（约 200MB，**不能提交进仓库**）──────────────
+# ⚠️ model.int8.onnx 有 109 MB，超过 GitHub 单文件 100MB 的**硬限制**，
+#   强行提交会被 GitHub 直接拒绝（不是警告，是拒绝）。
+#   clone 之后跑 `python tools/fetch_model.py` 自动下载（国内镜像，无需梯子）。
+#   只编译 Lite 变体的话完全不需要模型。
+app/src/full/assets/kokoro/
+
+# ── 构建产物 ────────────────────────────────────────────
+/app/build/
+/build/
+*.apk
+*.aab
+
+# ── 开发期临时文件与截图 ────────────────────────────────
+screenshot_*.png
+/screenshots/
+*.log
+/.kotlin/
+ui_*.xml
+/sdcard_*.xml
+__pycache__/
+*.pyc
+
+# TTS 调试脚本从手机拉回来的音频样本（临时产物，不进仓库）
+tools/tts/out/
+tools/tts/compare*/
+tools/tts/listen/
+*.wav

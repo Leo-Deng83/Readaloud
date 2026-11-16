@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      本项目第一原则：绝不联网。
+      这里刻意 **不声明** android.permission.INTERNET ——
+      安卓系统规定：不声明该权限，App 就无法创建网络套接字，
+      这是操作系统级别的禁止，任何人都可以用 apkanalyzer 验证。
+    -->
+
+    <!-- 后台播放要用到的三个权限。
+         注意：这里依然没有 INTERNET，「绝不联网」这条底线没变。 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
+      ⚠️ 必须要有这一条。Android 14(API 34) 起规定：
+      凡是用到 foregroundServiceType="mediaPlayback" 的服务，
+      必须同时声明 FOREGROUND_SERVICE_MEDIA_PLAYBACK 权限，
+      否则调用 startForeground() 会直接抛 SecurityException 崩掉。
+      荣耀 9X 是 Android 10 感觉不到，但小米 13 Pro（Android 14/15）会当场闪退。
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <!--
+      ⚠️ 重要：ExoPlayer 会自动往 APK 里塞一条 ACCESS_NETWORK_STATE 权限
+      （它是流媒体播放器，要判断网络好坏来调整码率）。
+      我们只播本地文件，根本不需要，而且它跟"绝不联网"的承诺相冲突。
+      tools:remove 的作用就是把它从最终 APK 里删掉。
+    -->
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE"
+        tools:node="remove" />
+
+    <!--
+      震动反馈：字号滑条每过一档的"咔哒"感（Apple iOS 滑条那种）。
+      ⚠️ 这是**普通权限**，系统安装时自动授予，不需要用户授权弹窗。
+      ⚠️ 跟「绝不联网」无关：VIBRATE 不给任何网络能力。
+      ⚠️ 用户在系统设置里关掉"触感反馈"时，这里会自动静默（hasVibrator() 返回 false）。
+    -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!--
+      Android 11(API 30) 起有「软件包可见性」限制：
+      App 默认看不到系统里的其他服务。我们要调用系统 TTS 语音引擎，
+      就必须在这里声明一声，否则 TextToSpeech 会初始化失败。
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Readaloud"
+        android:supportsRtl="true"
+        android:largeHeap="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 后台朗读服务。foregroundServiceType="mediaPlayback" 告诉系统这是放音乐的，
+             这样锁屏后系统不会把它掐掉，通知栏也会显示播放控制。 -->
+        <service
+            android:name=".PlaybackService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
+
+        <!--
+          耳机线控 / 蓝牙耳机 / 车机 / 手表的**媒体按键接收器**（PRD FR-18，P0）。
+
+          为什么需要单独注册这个东西：
+            耳机上那个键按下去，安卓不是直接把事件发给某个 App，而是广播一个
+            MEDIA_BUTTON 消息，谁在系统里"挂号"了谁才能收到。
+            我们的朗读服务活着的时候，MediaSession 自己会握着这个挂号名额；
+            但一旦手机内存紧张、把我们的后台进程回收了（荣耀的 iAware 特别爱干这事），
+            名额就没了 —— 这时再按耳机键，**什么反应都没有**。
+            注册这个接收器之后，系统会把按键消息交给它，由它把服务重新拉起来，
+            这样"按一下耳机键就能继续听"在任何时候都成立。
+        -->
+        <receiver
+            android:name="androidx.media3.session.MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

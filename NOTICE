@@ -1,0 +1,100 @@
+阅听 Readaloud (Readaloud)
+Copyright 2026 LD
+
+This product includes software developed as part of the 阅听 Readaloud project.
+
+═══════════════════════════════════════════════════════════════════════
+第三方组件与许可证声明
+═══════════════════════════════════════════════════════════════════════
+
+本软件按 Apache License 2.0 发布（见同目录 LICENSE 文件）。
+它内置了若干第三方开源组件，各自保留原版权与许可协议，完整清单见
+docs/第三方组件与许可证.md。
+
+───────────────────────────────────────────────────────────────────────
+【离线语音合成引擎】
+───────────────────────────────────────────────────────────────────────
+
+sherpa-onnx（Android AAR：sherpa-onnx:v1.13.8）
+  许可证：Apache License 2.0
+  主页：https://github.com/k2-fsa/sherpa-onnx
+  用途：离线神经网络语音合成框架（JNI 层），本 App 的全部朗读都靠它
+  作者：k2-fsa 团队（csukuangfj 等）
+
+Kokoro 语音模型（kokoro-int8-multi-lang-v1_1，含 model.int8.onnx、
+  voices.bin、tokens.txt、lexicon-*.txt、dict/）
+  许可证：Apache License 2.0（模型权重）
+  来源：https://huggingface.co/hexgrad/Kokoro-82M
+  架构：StyleTTS 2 + ISTFTNet（原作者 Li et al.）
+  说明：模型权重与音色数据均为 Apache-2.0，可随商业产品分发
+  ⚠️ 注意：该模型的**英文**发音依赖 espeak-ng（GPL-3.0），见下方专项说明
+
+───────────────────────────────────────────────────────────────────────
+【espeak-ng 语音数据 —— 必须随包分发，无法移除】
+───────────────────────────────────────────────────────────────────────
+
+本项目的 Full 变体打包了 espeak-ng 的数据文件
+（assets/kokoro/espeak-ng-data/，约 18 MB / 121 个文件）。
+
+**许可证**：GNU General Public License v3.0（GPL-3.0）
+**主页**：https://github.com/espeak-ng/espeak-ng
+**性质**：espeak-ng 项目分发的语音词典与音素数据文件（不是我们的代码）
+
+⚠️ **为什么必须分发它**：Kokoro 用 espeak-ng 作为**多语言前端**
+（`lang = "cmn"` 只是它的一个发音库），并非只用于英文回退。
+2026-10-06 我们实测过移除它：引擎直接返回
+「Invalid OfflineTtsConfig: failed to create native OfflineTts」，
+**中文也完全无法朗读**。因此只能保留。
+
+⚠️ **许可证上的考量**（我们已知并如实披露）：espeak-ng 是 GPL-3.0，
+而本项目源码是 Apache-2.0 —— GPL 的传染性要求整体分发物满足 GPL-3.0，
+Apache-2.0 不满足。若你打算将本 App 用于**商业分发**，建议就此点咨询专业律师。
+开源分发则不受影响。
+
+本项目采取的处理方式：
+  1. 如实、完整地披露 espeak-ng-data 的存在、来源与许可证（此处与
+     docs/第三方组件与许可证.md 第四节）；
+  2. **不修改** espeak-ng 的任何数据文件；
+  3. 明确标注：espeak-ng 与本项目源码是**独立作品**，通过数据文件形式使用。
+
+如需自行构建，请自行从 https://github.com/espeak-ng/espeak-ng 获取，
+并遵守其 GPL-3.0 条款。
+
+───────────────────────────────────────────────────────────────────────
+【PDF 解析】
+───────────────────────────────────────────────────────────────────────
+
+pdfbox-android
+  许可证：Apache License 2.0
+  主页：https://github.com/TomRoush/PdfBoxAndroid
+  用途：从 PDF 中抽取文字与版式信息（本 App 唯一可用的 Android 端 PDF 引擎）
+
+Bouncy Castle（由 pdfbox-android 间接引入）
+  许可证：MIT 风格（Bouncy Castle License）
+  主页：https://www.bouncycastle.org
+  用途：处理加密 / 带签名的 PDF
+
+───────────────────────────────────────────────────────────────────────
+【运行时与界面框架】
+───────────────────────────────────────────────────────────────────────
+
+AndroidX Core / Activity / Compose / Media3
+  许可证：Apache License 2.0
+  主页：https://developer.android.com/jetpack
+  用途：基础组件、Compose 界面框架、Media3 播放服务与通知栏控制
+
+Kotlin 标准库与 Kotlin 协程
+  许可证：Apache License 2.0
+  主页：https://github.com/JetBrains/kotlin
+
+ONNX Runtime（随 sherpa-onnx 一并打包为 libonnxruntime.so）
+  许可证：MIT
+  主页：https://github.com/microsoft/onnxruntime
+  用途：在手机上执行 Kokoro 神经网络推理
+
+═══════════════════════════════════════════════════════════════════════
+商标
+═══════════════════════════════════════════════════════════════════════
+
+「阅听 Readaloud」为本项目名称。Apache-2.0 不授予商标许可，
+本声明不授予任何第三方商标的使用许可。
